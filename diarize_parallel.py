@@ -87,6 +87,21 @@ parser.add_argument(
     help="if you have a GPU use 'cuda', otherwise 'cpu'",
 )
 
+parser.add_argument(
+    "--device-index",
+    dest="device_index",
+    default=0,
+    help="Set the index of your cuda device",
+)
+
+parser.add_argument(
+    "--translate",
+    action="store_true",
+    dest="translate",
+    default=False,
+    help="Run translate task if needed",
+)
+
 args = parser.parse_args()
 language = process_language_arg(args.language, args.model_name)
 
@@ -94,7 +109,7 @@ if args.stemming:
     # Isolate vocals from the rest of the audio
 
     return_code = os.system(
-        f'python -m demucs.separate -n htdemucs --two-stems=vocals "{args.audio}" -o temp_outputs --device "{args.device}"'
+        f'python -m demucs.separate -n htdemucs --two-stems=vocals "{args.audio}" -o temp_outputs --device "{args.device}:{args.device_index}"'
     )
 
     if return_code != 0:
@@ -115,13 +130,13 @@ else:
 
 logging.info("Starting Nemo process with vocal_target: ", vocal_target)
 nemo_process = subprocess.Popen(
-    ["python", "nemo_process.py", "-a", vocal_target, "--device", args.device],
+    ["python", "nemo_process.py", "-a", vocal_target, "--device", f"{args.device}:{args.device_index}"],
     stderr=subprocess.PIPE,
 )
 # Transcribe the audio file
 
 whisper_model = faster_whisper.WhisperModel(
-    args.model_name, device=args.device, compute_type=mtypes[args.device]
+    args.model_name, device=args.device + args.device_index, compute_type=mtypes[args.device], device_index=[args.device_index]
 )
 whisper_pipeline = faster_whisper.BatchedInferencePipeline(whisper_model)
 audio_waveform = faster_whisper.decode_audio(vocal_target)
@@ -132,19 +147,42 @@ suppress_tokens = (
 )
 
 if args.batch_size > 0:
-    transcript_segments, info = whisper_pipeline.transcribe(
-        audio_waveform,
-        language,
-        suppress_tokens=suppress_tokens,
-        batch_size=args.batch_size,
-    )
+    if args.translate:
+        transcript_segments, info = whisper_pipeline.transcribe(
+            audio_waveform,
+            language,
+            suppress_tokens=suppress_tokens,
+            batch_size=args.batch_size,
+            without_timestamps=True,
+            task="translate",
+        )
+    else:
+        transcript_segments, info = whisper_pipeline.transcribe(
+            audio_waveform,
+            language,
+            suppress_tokens=suppress_tokens,
+            batch_size=args.batch_size,
+            without_timestamps=True,
+        )
+        
 else:
-    transcript_segments, info = whisper_model.transcribe(
-        audio_waveform,
-        language,
-        suppress_tokens=suppress_tokens,
-        vad_filter=True,
-    )
+    if args.translate:
+        transcript_segments, info = whisper_model.transcribe(
+            audio_waveform,
+            language,
+            suppress_tokens=suppress_tokens,
+            without_timestamps=True,
+            vad_filter=True,
+            task="translate",
+        )
+    else:
+        transcript_segments, info = whisper_model.transcribe(
+            audio_waveform,
+            language,
+            suppress_tokens=suppress_tokens,
+            without_timestamps=True,
+            vad_filter=True,
+        )
 
 full_transcript = "".join(segment.text for segment in transcript_segments)
 
@@ -155,7 +193,7 @@ torch.cuda.empty_cache()
 
 # Forced Alignment
 alignment_model, alignment_tokenizer = load_alignment_model(
-    args.device,
+    f"{args.device}:{args.device_index}",
     dtype=torch.float16 if args.device == "cuda" else torch.float32,
 )
 
