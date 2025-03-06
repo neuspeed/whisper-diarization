@@ -89,6 +89,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--device-index",
+    type=int,
     dest="device_index",
     default=0,
     help="Set the index of your cuda device",
