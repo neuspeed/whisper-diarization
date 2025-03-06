@@ -136,7 +136,7 @@ nemo_process = subprocess.Popen(
 # Transcribe the audio file
 
 whisper_model = faster_whisper.WhisperModel(
-    args.model_name, device=args.device + args.device_index, compute_type=mtypes[args.device], device_index=[args.device_index]
+    args.model_name, device=args.device, compute_type=mtypes[args.device], device_index=[args.device_index]
 )
 whisper_pipeline = faster_whisper.BatchedInferencePipeline(whisper_model)
 audio_waveform = faster_whisper.decode_audio(vocal_target)
