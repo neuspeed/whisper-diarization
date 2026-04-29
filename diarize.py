@@ -5,7 +5,6 @@ import re
 
 import faster_whisper
 import torch
-import torchaudio
 
 from ctc_forced_aligner import (
     generate_emissions,
@@ -16,11 +15,9 @@ from ctc_forced_aligner import (
     preprocess_text,
 )
 from deepmultilingualpunctuation import PunctuationModel
-from nemo.collections.asr.models.msdd_models import NeuralDiarizer
 
 from helpers import (
     cleanup,
-    create_config,
     find_numeral_symbol_tokens,
     get_realigned_ws_mapping_with_punctuation,
     get_sentences_speaker_mapping,
@@ -35,18 +32,18 @@ from helpers import (
 
 mtypes = {"cpu": "int8", "cuda": "float16"}
 
+temp_path = os.path.join(os.getcwd(), f"temp_outputs_{os.getpid()}")
+os.makedirs(temp_path, exist_ok=True)
+
 # Initialize parser
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "-a", "--audio", help="name of the target audio file", required=True
-)
+parser.add_argument("-a", "--audio", help="name of the target audio file", required=True)
 parser.add_argument(
     "--no-stem",
     action="store_false",
     dest="stemming",
     default=True,
-    help="Disables source separation."
-    "This helps with long files that don't contain a lot of music.",
+    help="Disables source separation.This helps with long files that don't contain a lot of music.",
 )
 
 parser.add_argument(
@@ -89,6 +86,13 @@ parser.add_argument(
     help="if you have a GPU use 'cuda', otherwise 'cpu'",
 )
 
+parser.add_argument(
+    "--diarizer",
+    default="msdd",
+    choices=["msdd", "sortformer"],
+    help="Choose the diarization model to use",
+)
+
 args = parser.parse_args()
 language = process_language_arg(args.language, args.model_name)
 
@@ -96,7 +100,8 @@ if args.stemming:
     # Isolate vocals from the rest of the audio
 
     return_code = os.system(
-        f'python -m demucs.separate -n htdemucs --two-stems=vocals "{args.audio}" -o temp_outputs --device "{args.device}"'
+        f"python -m demucs.separate -n htdemucs --two-stems=vocals "
+        f'"{args.audio}" -o "{temp_path}" --device "{args.device}"'
     )
 
     if return_code != 0:
@@ -107,7 +112,7 @@ if args.stemming:
         vocal_target = args.audio
     else:
         vocal_target = os.path.join(
-            "temp_outputs",
+            temp_path,
             "htdemucs",
             os.path.splitext(os.path.basename(args.audio))[0],
             "vocals.wav",
@@ -124,9 +129,7 @@ whisper_model = faster_whisper.WhisperModel(
 whisper_pipeline = faster_whisper.BatchedInferencePipeline(whisper_model)
 audio_waveform = faster_whisper.decode_audio(vocal_target)
 suppress_tokens = (
-    find_numeral_symbol_tokens(whisper_model.hf_tokenizer)
-    if args.suppress_numerals
-    else [-1]
+    find_numeral_symbol_tokens(whisper_model.hf_tokenizer) if args.suppress_numerals else [-1]
 )
 
 if args.batch_size > 0:
@@ -158,9 +161,7 @@ alignment_model, alignment_tokenizer = load_alignment_model(
 
 emissions, stride = generate_emissions(
     alignment_model,
-    torch.from_numpy(audio_waveform)
-    .to(alignment_model.dtype)
-    .to(alignment_model.device),
+    torch.from_numpy(audio_waveform).to(alignment_model.dtype).to(alignment_model.device),
     batch_size=args.batch_size,
 )
 
@@ -183,37 +184,19 @@ spans = get_spans(tokens_starred, segments, blank_token)
 
 word_timestamps = postprocess_results(text_starred, spans, stride, scores)
 
+if args.diarizer == "msdd":
+    from diarization import MSDDDiarizer
 
-# convert audio to mono for NeMo combatibility
-ROOT = os.getcwd()
-temp_path = os.path.join(ROOT, "temp_outputs")
-os.makedirs(temp_path, exist_ok=True)
-torchaudio.save(
-    os.path.join(temp_path, "mono_file.wav"),
-    torch.from_numpy(audio_waveform).unsqueeze(0).float(),
-    16000,
-    channels_first=True,
-)
+    diarizer_model = MSDDDiarizer(device=args.device)
 
+elif args.diarizer == "sortformer":
+    from diarization import SortformerDiarizer
 
-# Initialize NeMo MSDD diarization model
-msdd_model = NeuralDiarizer(cfg=create_config(temp_path)).to(args.device)
-msdd_model.diarize()
+    diarizer_model = SortformerDiarizer(device=args.device)
 
-del msdd_model
+speaker_ts = diarizer_model.diarize(torch.from_numpy(audio_waveform).unsqueeze(0))
+del diarizer_model
 torch.cuda.empty_cache()
-
-# Reading timestamps <> Speaker Labels mapping
-
-
-speaker_ts = []
-with open(os.path.join(temp_path, "pred_rttms", "mono_file.rttm"), "r") as f:
-    lines = f.readlines()
-    for line in lines:
-        line_list = line.split(" ")
-        s = int(float(line_list[5]) * 1000)
-        e = s + int(float(line_list[8]) * 1000)
-        speaker_ts.append([s, e, int(line_list[11].split("_")[-1])])
 
 wsm = get_words_speaker_mapping(word_timestamps, speaker_ts, "start")
 

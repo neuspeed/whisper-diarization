@@ -19,13 +19,17 @@
              alt="GitHub license">
   </a>
   <a href="https://twitter.com/intent/tweet?text=&url=https%3A%2F%2Fgithub.com%2FMahmoudAshraf97%2Fwhisper-diarization">
-  <img src="https://img.shields.io/twitter/url/https/github.com/MahmoudAshraf97/whisper-diarization.svg?style=social" alt="Twitter">
+    <img src="https://img.shields.io/twitter/url/https/github.com/MahmoudAshraf97/whisper-diarization.svg?style=social" alt="Twitter">
   </a> 
   </a>
   <a href="https://colab.research.google.com/github/MahmoudAshraf97/whisper-diarization/blob/main/Whisper_Transcription_%2B_NeMo_Diarization.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Colab">
   </a>
- 
+</p>
+<p align="center">
+  <a href="https://trendshift.io/repositories/11413" target="_blank">
+    <img src="https://trendshift.io/api/badge/repositories/11413" alt="MahmoudAshraf97%2Fwhisper-diarization | #9 Repository of the day" style="width: 250px; height: 55px;" width="250" height="55"/>
+  </a>
 </p>
 
 

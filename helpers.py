@@ -1,11 +1,7 @@
-import json
 import os
 import shutil
 
 import nltk
-import wget
-
-from omegaconf import OmegaConf
 
 punct_model_langs = [
     "en",
@@ -141,9 +137,7 @@ TO_LANGUAGE_CODE = {
     "castilian": "es",
 }
 
-whisper_langs = sorted(LANGUAGES.keys()) + sorted(
-    [k.title() for k in TO_LANGUAGE_CODE.keys()]
-)
+whisper_langs = sorted(LANGUAGES.keys()) + sorted([k.title() for k in TO_LANGUAGE_CODE.keys()])
 
 langs_to_iso = {
     "af": "afr",
@@ -249,60 +243,6 @@ langs_to_iso = {
 }
 
 
-def create_config(output_dir):
-    DOMAIN_TYPE = "telephonic"
-    CONFIG_LOCAL_DIRECTORY = "nemo_msdd_configs"
-    CONFIG_FILE_NAME = f"diar_infer_{DOMAIN_TYPE}.yaml"
-    MODEL_CONFIG_PATH = os.path.join(CONFIG_LOCAL_DIRECTORY, CONFIG_FILE_NAME)
-    if not os.path.exists(MODEL_CONFIG_PATH):
-        os.makedirs(CONFIG_LOCAL_DIRECTORY, exist_ok=True)
-        CONFIG_URL = f"https://raw.githubusercontent.com/NVIDIA/NeMo/main/examples/speaker_tasks/diarization/conf/inference/{CONFIG_FILE_NAME}"
-        MODEL_CONFIG_PATH = wget.download(CONFIG_URL, MODEL_CONFIG_PATH)
-
-    config = OmegaConf.load(MODEL_CONFIG_PATH)
-
-    data_dir = os.path.join(output_dir, "data")
-    os.makedirs(data_dir, exist_ok=True)
-
-    meta = {
-        "audio_filepath": os.path.join(output_dir, "mono_file.wav"),
-        "offset": 0,
-        "duration": None,
-        "label": "infer",
-        "text": "-",
-        "rttm_filepath": None,
-        "uem_filepath": None,
-    }
-    with open(os.path.join(data_dir, "input_manifest.json"), "w") as fp:
-        json.dump(meta, fp)
-        fp.write("\n")
-
-    pretrained_vad = "vad_multilingual_marblenet"
-    pretrained_speaker_model = "titanet_large"
-    config.num_workers = 0
-    config.diarizer.manifest_filepath = os.path.join(data_dir, "input_manifest.json")
-    config.diarizer.out_dir = (
-        output_dir  # Directory to store intermediate files and prediction outputs
-    )
-
-    config.diarizer.speaker_embeddings.model_path = pretrained_speaker_model
-    config.diarizer.oracle_vad = (
-        False  # compute VAD provided with model_path to vad config
-    )
-    config.diarizer.clustering.parameters.oracle_num_speakers = False
-
-    # Here, we use our in-house pretrained NeMo VAD model
-    config.diarizer.vad.model_path = pretrained_vad
-    config.diarizer.vad.parameters.onset = 0.8
-    config.diarizer.vad.parameters.offset = 0.6
-    config.diarizer.vad.parameters.pad_offset = -0.05
-    config.diarizer.msdd_model.model_path = (
-        "diar_msdd_telephonic"  # Telephonic speaker diarization model
-    )
-
-    return config
-
-
 def get_word_ts_anchor(s, e, option="start"):
     if option == "end":
         return e
@@ -328,9 +268,7 @@ def get_words_speaker_mapping(wrd_ts, spk_ts, word_anchor_option="start"):
             s, e, sp = spk_ts[turn_idx]
             if turn_idx == len(spk_ts) - 1:
                 e = get_word_ts_anchor(ws, we, option="end")
-        wrd_spk_mapping.append(
-            {"word": wrd, "start_time": ws, "end_time": we, "speaker": sp}
-        )
+        wrd_spk_mapping.append({"word": wrd, "start_time": ws, "end_time": we, "speaker": sp})
     return wrd_spk_mapping
 
 
@@ -338,9 +276,7 @@ sentence_ending_punctuations = ".?!"
 
 
 def get_first_word_idx_of_sentence(word_idx, word_list, speaker_list, max_words):
-    is_word_sentence_end = (
-        lambda x: x >= 0 and word_list[x][-1] in sentence_ending_punctuations
-    )
+    is_word_sentence_end = lambda x: x >= 0 and word_list[x][-1] in sentence_ending_punctuations
     left_idx = word_idx
     while (
         left_idx > 0
@@ -354,9 +290,7 @@ def get_first_word_idx_of_sentence(word_idx, word_list, speaker_list, max_words)
 
 
 def get_last_word_idx_of_sentence(word_idx, word_list, max_words):
-    is_word_sentence_end = (
-        lambda x: x >= 0 and word_list[x][-1] in sentence_ending_punctuations
-    )
+    is_word_sentence_end = lambda x: x >= 0 and word_list[x][-1] in sentence_ending_punctuations
     right_idx = word_idx
     while (
         right_idx < len(word_list) - 1
@@ -365,19 +299,12 @@ def get_last_word_idx_of_sentence(word_idx, word_list, max_words):
     ):
         right_idx += 1
 
-    return (
-        right_idx
-        if right_idx == len(word_list) - 1 or is_word_sentence_end(right_idx)
-        else -1
-    )
+    return right_idx if right_idx == len(word_list) - 1 or is_word_sentence_end(right_idx) else -1
 
 
-def get_realigned_ws_mapping_with_punctuation(
-    word_speaker_mapping, max_words_in_sentence=50
-):
+def get_realigned_ws_mapping_with_punctuation(word_speaker_mapping, max_words_in_sentence=50):
     is_word_sentence_end = (
-        lambda x: x >= 0
-        and word_speaker_mapping[x]["word"][-1] in sentence_ending_punctuations
+        lambda x: x >= 0 and word_speaker_mapping[x]["word"][-1] in sentence_ending_punctuations
     )
     wsp_len = len(word_speaker_mapping)
 
@@ -415,9 +342,7 @@ def get_realigned_ws_mapping_with_punctuation(
                 k += 1
                 continue
 
-            speaker_list[left_idx : right_idx + 1] = [mod_speaker] * (
-                right_idx - left_idx + 1
-            )
+            speaker_list[left_idx : right_idx + 1] = [mod_speaker] * (right_idx - left_idx + 1)
             k = right_idx
 
         k += 1
@@ -478,7 +403,7 @@ def get_speaker_aware_transcript(sentences_speaker_mapping, f):
 
 
 def format_timestamp(
-    milliseconds: float, always_include_hours: bool = False, decimal_marker: str = "."
+    milliseconds: float, always_include_hours: bool = True, decimal_marker: str = ","
 ):
     assert milliseconds >= 0, "non-negative timestamp expected"
 
@@ -492,9 +417,7 @@ def format_timestamp(
     milliseconds -= seconds * 1_000
 
     hours_marker = f"{hours:02d}:" if always_include_hours or hours > 0 else ""
-    return (
-        f"{hours_marker}{minutes:02d}:{seconds:02d}{decimal_marker}{milliseconds:03d}"
-    )
+    return f"{hours_marker}{minutes:02d}:{seconds:02d}{decimal_marker}{milliseconds:03d}"
 
 
 def write_srt(transcript, file):
@@ -506,8 +429,8 @@ def write_srt(transcript, file):
         # write srt lines
         print(
             f"{i}\n"
-            f"{format_timestamp(segment['start_time'], always_include_hours=True, decimal_marker=',')} --> "
-            f"{format_timestamp(segment['end_time'], always_include_hours=True, decimal_marker=',')}\n"
+            f"{format_timestamp(segment['start_time'])} --> "
+            f"{format_timestamp(segment['end_time'])}\n"
             f"{segment['speaker']}: {segment['text'].strip().replace('-->', '->')}\n",
             file=file,
             flush=True,
@@ -548,17 +471,11 @@ def _get_next_start_timestamp(word_timestamps, current_word_index, final_timesta
             return word_timestamps[next_word_index]["start"]
 
 
-def filter_missing_timestamps(
-    word_timestamps, initial_timestamp=0, final_timestamp=None
-):
+def filter_missing_timestamps(word_timestamps, initial_timestamp=0, final_timestamp=None):
     # handle the first and last word
     if word_timestamps[0].get("start") is None:
-        word_timestamps[0]["start"] = (
-            initial_timestamp if initial_timestamp is not None else 0
-        )
-        word_timestamps[0]["end"] = _get_next_start_timestamp(
-            word_timestamps, 0, final_timestamp
-        )
+        word_timestamps[0]["start"] = initial_timestamp if initial_timestamp is not None else 0
+        word_timestamps[0]["end"] = _get_next_start_timestamp(word_timestamps, 0, final_timestamp)
 
     result = [
         word_timestamps[0],
