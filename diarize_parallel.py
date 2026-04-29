@@ -69,29 +69,38 @@ if __name__ == "__main__":
         "This helps the diarization accuracy but converts all digits into written text.",
     )
 
-    parser.add_argument(
-        "--whisper-model",
-        dest="model_name",
-        default="large-v2",
-        help="name of the Whisper model to use",
-    )
+  parser.add_argument(
+      "--device-index",
+      type=int,
+      dest="device_index",
+      default=0,
+      help="Set the index of your cuda device",
+  )
 
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        dest="batch_size",
-        default=4,
-        help="Batch size for batched inference, reduce if you run out of memory, "
-        "set to 0 for original whisper longform inference",
-    )
-
-    parser.add_argument(
+  parser.add_argument(
+      "--translate",
+      action="store_true",
+      dest="translate",
+      default=False,
+      help="Run translate task if needed",
+  )
+  
+  parser.add_argument(
+          "--batch-size",
+          type=int,
+          dest="batch_size",
+          default=4,
+          help="Batch size for batched inference, reduce if you run out of memory, "
+          "set to 0 for original whisper longform inference",
+  )
+  
+  parser.add_argument(
         "--language",
         type=str,
         default=None,
         choices=whisper_langs,
         help="Language spoken in the audio, specify None to perform language detection",
-    )
+  )
 
     parser.add_argument(
         "--device",
@@ -159,19 +168,41 @@ if __name__ == "__main__":
     )
 
     if args.batch_size > 0:
-        transcript_segments, info = whisper_pipeline.transcribe(
-            audio_waveform,
-            language,
-            suppress_tokens=suppress_tokens,
-            batch_size=args.batch_size,
-        )
+      if args.translate:
+          transcript_segments, info = whisper_pipeline.transcribe(
+              audio_waveform,
+              language,
+              suppress_tokens=suppress_tokens,
+              batch_size=args.batch_size,
+              without_timestamps=True,
+              task="translate",
+          )
+      else:
+          transcript_segments, info = whisper_pipeline.transcribe(
+              audio_waveform,
+              language,
+              suppress_tokens=suppress_tokens,
+              batch_size=args.batch_size,
+              without_timestamps=True,
+          )
     else:
-        transcript_segments, info = whisper_model.transcribe(
-            audio_waveform,
-            language,
-            suppress_tokens=suppress_tokens,
-            vad_filter=True,
-        )
+      if args.translate:
+          transcript_segments, info = whisper_model.transcribe(
+              audio_waveform,
+              language,
+              suppress_tokens=suppress_tokens,
+              without_timestamps=True,
+              vad_filter=True,
+              task="translate",
+          )
+      else:
+          transcript_segments, info = whisper_model.transcribe(
+              audio_waveform,
+              language,
+              suppress_tokens=suppress_tokens,
+              without_timestamps=True,
+              vad_filter=True,
+          )
 
     full_transcript = "".join(segment.text for segment in transcript_segments)
 
