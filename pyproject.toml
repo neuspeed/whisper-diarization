@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "wheel", "pkg_resources"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -27,6 +27,9 @@ dependencies = [
     "pandas==2.0.3",
     "tqdm==4.65.0",
 ]
+
+[tool.uv.extra-build-dependencies]
+openai-whisper = ["setuptools"] 
 
 [tool.setuptools]
 py-modules = ["diarize", "diarize_parallel", "helpers"]
