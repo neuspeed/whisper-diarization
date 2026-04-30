@@ -1,3 +1,36 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "whisper-diarization"
+version = "1.0.0"
+description = "Automatic Speech Recognition with Speaker Diarization based on OpenAI Whisper"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+dependencies = [
+    # ASR
+    "openai-whisper==20240930",
+    "faster-whisper==0.10.0",
+    # Diarization
+    "nemo_toolkit[asr]==1.22.0",
+    # Audio processing
+    "librosa==0.10.1",
+    "soundfile==0.12.1",
+    # Alignment
+    "ctc-forced-aligner==2.3.4",
+    # Source separation
+    "demucs==4.0.0",
+    # Other
+    "numpy==1.26.0",
+    "pandas==2.0.3",
+    "tqdm==4.65.0",
+]
+
+[tool.setuptools]
+py-modules = ["diarize", "diarize_parallel", "helpers"]
+
 [tool.ruff]
 line-length = 100
 extend-exclude = ["*.ipynb"]
