@@ -18,9 +18,8 @@ dependencies = [
     "ctc_forced_aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git"
 ]
 
-[tool.setuptools]
-py-modules = ["diarize", "diarize_parallel", "helpers"]
-packages = ["diarization"]
+[tool.setuptools.packages.find]
+where = ["."]
 
 [tool.ruff]
 line-length = 100
