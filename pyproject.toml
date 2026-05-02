@@ -18,8 +18,15 @@ dependencies = [
     "ctc_forced_aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git"
 ]
 
-[tool.setuptools.packages.find]
-where = ["."]
+[project.scripts]
+diarizer = "diarize_parallel:main"
+
+[tool.setuptools]
+packages = ["diarizer", "diarization", "diarization.msdd", "diarization.sortformer"]
+
+[tool.setuptools.package-data]
+diarizer = ["py.typed"]
+diarization = ["*.yaml"]
 
 [tool.ruff]
 line-length = 100
