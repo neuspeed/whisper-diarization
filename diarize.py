@@ -16,7 +16,7 @@ from ctc_forced_aligner import (
 )
 from deepmultilingualpunctuation import PunctuationModel
 
-from .helpers import (
+from helpers import (
     cleanup,
     find_numeral_symbol_tokens,
     get_realigned_ws_mapping_with_punctuation,
