@@ -16,7 +16,7 @@ from ctc_forced_aligner import (
 )
 from deepmultilingualpunctuation import PunctuationModel
 
-from helpers import (
+from .helpers import (
     cleanup,
     find_numeral_symbol_tokens,
     get_realigned_ws_mapping_with_punctuation,
@@ -185,12 +185,12 @@ spans = get_spans(tokens_starred, segments, blank_token)
 word_timestamps = postprocess_results(text_starred, spans, stride, scores)
 
 if args.diarizer == "msdd":
-    from diarization import MSDDDiarizer
+    from .diarization import MSDDDiarizer
 
     diarizer_model = MSDDDiarizer(device=args.device)
 
 elif args.diarizer == "sortformer":
-    from diarization import SortformerDiarizer
+    from .diarization import SortformerDiarizer
 
     diarizer_model = SortformerDiarizer(device=args.device)
 

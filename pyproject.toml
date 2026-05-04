@@ -10,6 +10,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
 dependencies = [
+    "torch>=2.0.0",
     "nemo_toolkit[asr]>=2.5.0",
     "nltk",
     "faster-whisper>=1.1.0",
@@ -18,12 +19,9 @@ dependencies = [
     "ctc_forced_aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git"
 ]
 
-[project.scripts]
-diarizer = "diarize_parallel:main"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["*"]
+[tool.setuptools]
+package-dir = {"diarizer" = "."}
+packages = ["diarizer", "diarization"]
 
 [tool.setuptools.package-data]
 diarization = ["*.yaml"]
