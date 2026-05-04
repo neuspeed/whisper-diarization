@@ -21,11 +21,11 @@ dependencies = [
 [project.scripts]
 diarizer = "diarize_parallel:main"
 
-[tool.setuptools]
-packages = ["diarizer", "diarization", "diarization.msdd", "diarization.sortformer"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
 
 [tool.setuptools.package-data]
-diarizer = ["py.typed"]
 diarization = ["*.yaml"]
 
 [tool.ruff]
