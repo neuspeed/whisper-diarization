@@ -21,7 +21,7 @@ dependencies = [
 
 [tool.setuptools]
 package-dir = {"diarizer" = "."}
-packages = ["diarizer", "diarization"]
+packages = ["diarizer", "diarization", "diarization.msdd", "diarization.sortformer"]
 
 [tool.setuptools.package-data]
 diarization = ["*.yaml"]

@@ -1,0 +1,1 @@
+from .sortformer import SortformerDiarizer
