@@ -1,0 +1,32 @@
+﻿1
+00:00:00,220 --> 00:00:01,785
+Speaker 1: Welcome to the podcast.
+
+2
+00:00:02,100 --> 00:00:02,541
+Speaker 0: Hi Peter.
+
+3
+00:00:02,793 --> 00:00:03,192
+Speaker 1: Hi Peter.
+
+4
+00:00:03,234 --> 00:00:10,941
+Speaker 0: Hello John Jonas Thank you for being the first guest on our podcast so far the most important guest we've had.
+
+5
+00:00:11,865 --> 00:00:13,104
+Speaker 2: That's an amazing honor.
+
+6
+00:00:13,251 --> 00:00:14,805
+Speaker 2: Thank you so much for having me.
+
+7
+00:00:15,561 --> 00:00:16,947
+Speaker 0: Well, we're here to talk about Bitcoin.
+
+8
+00:00:17,724 --> 00:00:23,667
+Speaker 0: we are and Bitcoin core development and We have Peter Waller as our guest.
+

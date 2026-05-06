@@ -19,8 +19,8 @@ from ctc_forced_aligner import (
 )
 from deepmultilingualpunctuation import PunctuationModel
 
-from diarization import MSDDDiarizer
-from helpers import (
+from .msdd import MSDDDiarizer
+from .helpers import (
     cleanup,
     find_numeral_symbol_tokens,
     get_realigned_ws_mapping_with_punctuation,

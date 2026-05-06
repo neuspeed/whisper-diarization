@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=64", "wheel", "build"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,6 +10,8 @@ readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
 dependencies = [
+    "numpy<2",
+    "indic-numtowords @ git+https://github.com/AI4Bharat/indic-numtowords.git",
     "torch>=2.0.0",
     "nemo_toolkit[asr]>=2.5.0",
     "nltk",
@@ -18,13 +20,6 @@ dependencies = [
     "deepmultilingualpunctuation @ git+https://github.com/oliverguhr/deepmultilingualpunctuation.git",
     "ctc_forced_aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git"
 ]
-
-[tool.setuptools]
-package-dir = {"diarizer" = "."}
-packages = ["diarizer", "diarization", "diarization.msdd", "diarization.sortformer"]
-
-[tool.setuptools.package-data]
-diarization = ["*.yaml"]
 
 [tool.ruff]
 line-length = 100

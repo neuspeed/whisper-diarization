@@ -185,12 +185,12 @@ spans = get_spans(tokens_starred, segments, blank_token)
 word_timestamps = postprocess_results(text_starred, spans, stride, scores)
 
 if args.diarizer == "msdd":
-    from .diarization import MSDDDiarizer
+    from msdd import MSDDDiarizer
 
     diarizer_model = MSDDDiarizer(device=args.device)
 
 elif args.diarizer == "sortformer":
-    from .diarization import SortformerDiarizer
+    from sortformer import SortformerDiarizer
 
     diarizer_model = SortformerDiarizer(device=args.device)
 
