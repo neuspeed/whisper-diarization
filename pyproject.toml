@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "wheel", "build"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,15 +11,17 @@ license = {file = "LICENSE"}
 requires-python = ">=3.10"
 dependencies = [
     "numpy<2",
-    "indic-numtowords @ git+https://github.com/AI4Bharat/indic-numtowords.git",
     "torch>=2.0.0",
     "nemo_toolkit[asr]>=2.5.0",
     "nltk",
-    "faster-whisper>=1.1.0",
-    "demucs @ git+https://github.com/MahmoudAshraf97/demucs.git",
-    "deepmultilingualpunctuation @ git+https://github.com/oliverguhr/deepmultilingualpunctuation.git",
-    "ctc_forced_aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git"
+    "faster-whisper>=1.1.0"
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml"]
 
 [tool.ruff]
 line-length = 100

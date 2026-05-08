@@ -49,7 +49,7 @@ def run_diarization(
     output_dir: Optional[Union[str, Path]] = None,
     model_name: str = "medium.en",
     device: Optional[str] = None,
-    stemming: bool = True,
+    no_stem: bool = True,
     suppress_numerals: bool = False,
     batch_size: int = 4,
     language: Optional[str] = None,
@@ -64,7 +64,7 @@ def run_diarization(
         output_dir: Directory for temporary and output files (defaults to current dir)
         model_name: Whisper model name
         device: Device to use ('cuda', 'cpu', or None for auto-detection)
-        stemming: Whether to use source separation for vocals
+        no_stem: Whether to disable source separation for vocals
         suppress_numerals: Whether to transcribe numbers as words
         batch_size: Batch size for inference
         language: Language code or None for auto-detection
@@ -106,7 +106,7 @@ def run_diarization(
     base_name = audio_path.stem
 
     # Source separation
-    if stemming:
+    if not no_stem:
         return_code = os.system(
             f"python -m demucs.separate -n htdemucs --two-stems=vocals "
             f"\"{audio_path}\" -o \"{temp_path}\" --device \"{device}\""
@@ -114,7 +114,7 @@ def run_diarization(
         if return_code != 0:
             logging.warning(
                 "Source splitting failed, using original audio file. "
-                "Use stemming=False to disable source separation."
+                "Use no_stem=True to disable source separation."
             )
             vocal_target = str(audio_path)
         else:
