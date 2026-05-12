@@ -71,8 +71,11 @@ class MSDDDiarizer:
         return labels
 
 
-def create_config():
+def create_config(device: Union[str, torch.device] = "cpu"):
     config = OmegaConf.load(os.path.join(os.path.dirname(__file__), "diar_infer_telephonic.yaml"))
+    
+    config.device = device
+    
     pretrained_vad = "vad_multilingual_marblenet"
     pretrained_speaker_model = "titanet_large"
 
