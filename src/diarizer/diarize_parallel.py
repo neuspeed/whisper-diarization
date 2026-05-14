@@ -35,16 +35,17 @@ from .helpers import (
 )
 
 
-def diarize_parallel(audio: torch.Tensor, device: str, queue: mp.Queue) -> None:
+def diarize_parallel(config_path: str, audio: torch.Tensor, device: str, queue: mp.Queue) -> None:
     """
     Worker function for parallel diarization using MSDD.
     """
-    model = MSDDDiarizer(device=device)
+    model = MSDDDiarizer(config_path=config_path, device=device)
     result = model.diarize(audio)
     queue.put(result)
 
 
 def run_diarization(
+    config_path: str,
     audio_path: Union[str, Path],
     output_dir: Optional[Union[str, Path]] = None,
     model_name: str = "medium.en",
@@ -60,6 +61,7 @@ def run_diarization(
     Main function to run speaker diarization on an audio file.
 
     Args:
+        config_path: Path to the diarization config file
         audio_path: Path to the input audio file
         output_dir: Directory for temporary and output files (defaults to current dir)
         model_name: Whisper model name
@@ -133,6 +135,7 @@ def run_diarization(
     nemo_process = mp.Process(
         target=diarize_parallel,
         args=(
+            config_path,
             torch.from_numpy(audio_waveform).unsqueeze(0),
             device,
             results_queue,

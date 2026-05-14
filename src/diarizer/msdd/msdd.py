@@ -13,8 +13,8 @@ from omegaconf import OmegaConf
 
 
 class MSDDDiarizer:
-    def __init__(self, device: Union[str, torch.device]):
-        self.model: NeuralDiarizer = NeuralDiarizer(cfg=create_config()).to(device)
+    def __init__(self, config_path: str, device: Union[str, torch.device]):
+        self.model: NeuralDiarizer = NeuralDiarizer(cfg=create_config(config_path=config_path)).to(device)
 
     def diarize(self, audio: torch.Tensor):
         with tempfile.TemporaryDirectory() as temp_path:
@@ -71,27 +71,19 @@ class MSDDDiarizer:
         return labels
 
 
-def create_config(device: Union[str, torch.device] = "cpu"):
-    config = OmegaConf.load(os.path.join(os.path.dirname(__file__), "diar_infer_telephonic.yaml"))
+def create_config(device: Union[str, torch.device] = "cpu", config_path: str = "diar_infer_telephonic.yaml"):
+    config = OmegaConf.load(os.path.join(os.path.dirname(__file__), config_path))
     
     config.device = device
     
-    pretrained_vad = "vad_multilingual_marblenet"
-    pretrained_speaker_model = "titanet_large"
-
     config.diarizer.out_dir = None
     config.diarizer.manifest_filepath = None
-    config.diarizer.speaker_embeddings.model_path = pretrained_speaker_model
     config.diarizer.oracle_vad = False  # compute VAD provided with model_path to vad config
     config.diarizer.clustering.parameters.oracle_num_speakers = False
 
     # Here, we use our in-house pretrained NeMo VAD model
-    config.diarizer.vad.model_path = pretrained_vad
     config.diarizer.vad.parameters.onset = 0.8
     config.diarizer.vad.parameters.offset = 0.6
     config.diarizer.vad.parameters.pad_offset = -0.05
-    config.diarizer.msdd_model.model_path = (
-        "diar_msdd_telephonic"  # Telephonic speaker diarization model
-    )
 
     return config
